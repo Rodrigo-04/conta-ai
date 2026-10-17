@@ -18,13 +18,13 @@ App mobile para dividir a conta de restaurantes entre amigos. Tire uma foto da n
 
 ## Stack
 
-| Camada | Tecnologia |
-|---|---|
-| App | Expo (React Native) + TypeScript |
-| Banco local | SQLite (`expo-sqlite`) |
-| Login e nuvem | Supabase (Auth + Postgres) |
-| Leitura da nota | OCR no aparelho (ex.: ML Kit), exige *development build* do Expo |
-| Testes | Vitest ou Jest (módulo de cálculo) |
+| Camada          | Tecnologia                                                       |
+| --------------- | ---------------------------------------------------------------- |
+| App             | Expo (React Native) + TypeScript                                 |
+| Banco local     | SQLite (`expo-sqlite`)                                           |
+| Login e nuvem   | Supabase (Auth + Postgres)                                       |
+| Leitura da nota | OCR no aparelho (ex.: ML Kit), exige _development build_ do Expo |
+| Testes          | Vitest ou Jest (módulo de cálculo)                               |
 
 ## Documentação
 
@@ -38,15 +38,15 @@ A definir. Os passos entram aqui quando o projeto Expo for criado (Sprint 0).
 
 ### Antes de começar
 
-- [X] Decidir o nome do app (Conta aí)
-- [X] Criar o repositório no GitHub (conta-ai)
+- [x] Decidir o nome do app (Conta aí)
+- [x] Criar o repositório no GitHub (conta-ai)
 - [ ] Criar projeto no Supabase com o mesmo nome (slug)
 - [ ] Reunir de 10 a 20 fotos reais de notas (térmica, self-service, com couvert, com desconto)
 
 ### Sprint 0: Fundação
 
-- [X] Criar o projeto Expo com TypeScript e `expo-router`
-- [ ] Configurar o *development build* (necessário para o OCR)
+- [x] Criar o projeto Expo com TypeScript e `expo-router`
+- [x] Configurar o _development build_ (necessário para o OCR)
 - [ ] Definir a estrutura de pastas (UI, módulo de cálculo, banco, sincronização)
 - [ ] Configurar `expo-sqlite` e as migrações do esquema (conta, item, pessoa, consumo, parcela)
 - [ ] Configurar lint, formatação e ambiente de testes
@@ -112,3 +112,51 @@ A definir. Os passos entram aqui quando o projeto Expo for criado (Sprint 0).
 ## Fora do escopo por enquanto
 
 Modo colaborativo em tempo real, agenda de amigos entre contas, pagamento parcial, cobrança por WhatsApp e Pix, leitura do QR code da NFC-e, rateio de desconto e couvert, e notificações de lembrete.
+
+# Desenvolvimento
+
+- criação do app com Expo:
+
+```bash
+npx create-expo-app@latest conta-ai
+cd conta-ai
+npx expo start
+```
+
+- limpar o projeto padrão:
+
+```bash
+npm run reset-project
+```
+
+- instalar biblioteca de development build:
+
+```bash
+npx expo install expo-dev-client
+```
+
+- instalar bibliotecas que iremos usar:
+
+```bash
+npx expo install expo-sqlite expo-camera expo-image-picker expo-image-manipulator expo-secure-store
+```
+
+- instale a EAS CLI e entre com Expo:
+
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+```
+
+- gere o build:
+
+```bash
+eas build --profile development --platform android
+```
+
+- sobe o servidor:
+
+```bash
+npx expo start --dev-client
+```
