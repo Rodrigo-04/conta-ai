@@ -13,13 +13,14 @@ Aqui lidaremos com:
 
 ## Arquivos
 
-| Nome     | Objetivo                           |
-| -------- | ---------------------------------- |
-| types.ts | Definir tipos e objetos para usar. |
-| erros.ts | Representar erros dos cálculos.    |
-| money.ts | Validar valores e somar.           |
-| fee.ts   | Calcular taxa de serviço.          |
-| split.ts | Dividir a conta entre as pessoas.  |
+| Nome         | Objetivo                           |
+| ------------ | ---------------------------------- |
+| types.ts     | Definir tipos e objetos para usar. |
+| erros.ts     | Representar erros dos cálculos.    |
+| money.ts     | Validar valores e somar.           |
+| fee.ts       | Calcular taxa de serviço.          |
+| split.ts     | Dividir a conta entre as pessoas.  |
+| remainder.ts | Sorteia a diferença da divisão.    |
 
 Irei usar o Jest para testes automáticos
 

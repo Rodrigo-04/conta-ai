@@ -163,6 +163,7 @@ export function splitByItems(input: SplitByItemsInput): ItemSplitResult {
     };
   });
 
+  //devolver resultado
   return {
     subtotalCents,
     feeCents,
