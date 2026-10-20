@@ -21,6 +21,7 @@ Aqui lidaremos com:
 | fee.ts       | Calcular taxa de serviço.          |
 | split.ts     | Dividir a conta entre as pessoas.  |
 | remainder.ts | Sorteia a diferença da divisão.    |
+| receipt.ts   | Confere valores e define valor.    |
 
 Irei usar o Jest para testes automáticos
 
