@@ -26,6 +26,10 @@ Aqui lidaremos com:
 
 Irei usar o Jest para testes automáticos
 
+> https://jestjs.io/
+
+Testes gerados pelo Claude (46 testes)
+
 Precisamos instalar as ferramentas
 
 ```bash

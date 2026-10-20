@@ -2,7 +2,7 @@
 
 //importações
 import { SplitError } from "./errors";
-import { assertsCents } from "./money";
+import { assertCents } from "./money";
 import type { Cents } from "./types";
 
 //definir um percentual padrão para o serviço (10%)
@@ -16,11 +16,11 @@ export interface FeeInput {
 
 //função para taxa de serviço
 export function resolveServiceFee(subtotalCents: Cents, fee: FeeInput): Cents {
-  assertsCents(subtotalCents, "Subtotal"); //validar subtotal
+  assertCents(subtotalCents, "Subtotal"); //validar subtotal
 
   //valida se é um valor explícito
   if (fee.amountCents !== undefined && fee.amountCents !== null) {
-    assertsCents(fee.amountCents, "Taxa de serviço");
+    assertCents(fee.amountCents, "Taxa de serviço");
     return fee.amountCents;
   }
 

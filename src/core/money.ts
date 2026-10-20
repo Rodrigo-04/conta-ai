@@ -3,7 +3,7 @@ import { SplitError } from "./errors";
 import type { Cents } from "./types";
 
 //função para validar valor
-export function assertsCents(value: number, label: string): void {
+export function assertCents(value: number, label: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new SplitError(
       "INVALID_AMOUNT",
@@ -15,8 +15,8 @@ export function assertsCents(value: number, label: string): void {
 //soma valores em centavos
 export function sumCents(values: readonly Cents[]): Cents {
   return values.reduce((acc, v) => acc + v, 0);
-  /** acc - acumulador, guarda soma parcial
-   * v - valor atual do array
-   * acc + v - soma o valor atual ao acumulador
-   * 0 - valor inicial do acumulador **/
 }
+/** acc - acumulador, guarda soma parcial
+ * v - valor atual do array
+ * acc + v - soma o valor atual ao acumulador
+ * 0 - valor inicial do acumulador **/

@@ -1,10 +1,10 @@
 //importações
 import { SplitError } from "./errors";
-import { assertsCents } from "./money";
-import { Cents, PersonTotal, WithAdjustment } from "./types";
+import { assertCents } from "./money";
+import type { Cents, PersonTotal, WithAdjustment } from "./types";
 
 //sorteia uma pessoa para receber a diferença da conta (quando tem resto na divisão)
-export function drawREmainderRecipient(
+export function drawRemainderRecipient(
   personIds: readonly string[],
   rng: () => number = Math.random,
 ): string {
@@ -27,15 +27,15 @@ export function applyRemainder<T extends PersonTotal>(
   remainderCents: Cents,
   recipientId: string,
 ): WithAdjustment<T>[] {
-  assertsCents(remainderCents, "Diferença");
+  assertCents(remainderCents, "Diferença");
   if (!shares.some((s) => s.personId === recipientId)) {
     throw new SplitError(
       "UNKNOWN_PERSON",
-      `Pessoa desconhecida ${recipientId}`,
+      `Pessoa desconhecida: ${recipientId}`,
     );
   }
   return shares.map((share) => {
-    const adjustmentCents = share.personId == recipientId ? remainderCents : 0;
+    const adjustmentCents = share.personId === recipientId ? remainderCents : 0;
     return {
       ...share,
       adjustmentCents,

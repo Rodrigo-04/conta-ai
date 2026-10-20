@@ -1,14 +1,14 @@
 //importações
 import { SplitError } from "./errors";
-import { assertsCents, sumCents } from "./money";
+import { assertCents, sumCents } from "./money";
 import type {
-    Cents,
-    EqualSplitResult,
-    FeeMode,
-    Item,
-    ItemSplitResult,
-    Participation,
-    PersonShare,
+  Cents,
+  EqualSplitResult,
+  FeeMode,
+  Item,
+  ItemSplitResult,
+  Participation,
+  PersonShare,
 } from "./types";
 
 //constantes
@@ -49,7 +49,7 @@ export function splitEqual(
   totalCents: Cents,
   personIds: readonly string[],
 ): EqualSplitResult {
-  assertsCents(totalCents, "Total");
+  assertCents(totalCents, "Total");
   assertPeople(personIds);
 
   const n = personIds.length;
@@ -66,8 +66,9 @@ export interface SplitByItemsInput {
   items: readonly Item[];
   personIds: readonly string[];
   participations: readonly Participation[];
-  feeCents: Cents; //taxa de serviço já em centavos
-  feeMode: FeeMode; //igual ou proporcional
+  /** Taxa de serviço já resolvida em centavos (ver `resolveServiceFee`). */
+  feeCents: Cents;
+  feeMode: FeeMode;
 }
 
 //dividir a conta por itens
@@ -76,9 +77,9 @@ export function splitByItems(input: SplitByItemsInput): ItemSplitResult {
   const { items, personIds, participations, feeCents, feeMode } = input;
 
   assertPeople(personIds);
-  assertsCents(feeCents, "Taxa de serviço");
+  assertCents(feeCents, "Taxa de serviço");
   items.forEach((item) =>
-    assertsCents(item.totalCents, `Valor do item ${item.name}`),
+    assertCents(item.totalCents, `Valor do item "${item.name}"`),
   );
 
   //estrutura ára localizar pessoas e itens
@@ -96,7 +97,7 @@ export function splitByItems(input: SplitByItemsInput): ItemSplitResult {
       if (!personIndex.has(personId)) {
         throw new SplitError(
           "UNKNOWN_PERSON",
-          `Pessoas desconhecida: ${personId}`,
+          `Pessoa desconhecida: ${personId}`,
         );
       }
       set.add(personId);
@@ -150,7 +151,7 @@ export function splitByItems(input: SplitByItemsInput): ItemSplitResult {
   const shares: PersonShare[] = personIds.map((personId, index) => {
     const exactConsumption = consumption[index];
     const numerator = proportional
-      ? exactConsumption * (S + N)
+      ? exactConsumption * (S + F)
       : exactConsumption * N + F * L;
 
     const total = Number(numerator / denominator);

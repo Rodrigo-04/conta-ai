@@ -1,6 +1,6 @@
 //importação
-import { assertsCents, sumCents } from "./money";
-import { Cents, Item } from "./types";
+import { assertCents, sumCents } from "./money";
+import type { Cents, Item } from "./types";
 
 //estrutura do resultado da conferência
 export interface ReceiptCheck {
@@ -19,8 +19,8 @@ export function reconcileReceipt(input: {
   printedTotalCents: Cents;
 }): ReceiptCheck {
   const { items, feeCents, printedTotalCents } = input;
-  assertsCents(feeCents, "Taxa de serviço");
-  assertsCents(printedTotalCents, "Total da nota");
+  assertCents(feeCents, "Taxa de serviço");
+  assertCents(printedTotalCents, "Total da nota");
 
   const subtotalCents = sumCents(items.map((i) => i.totalCents));
   const expectedTotalCents = subtotalCents + feeCents;
@@ -46,9 +46,9 @@ export function resolveBillTotal(input: {
     input.printedTotalCents !== undefined &&
     input.printedTotalCents !== null
   ) {
-    assertsCents(input.printedTotalCents, "Total da nota");
+    assertCents(input.printedTotalCents, "Total da nota");
     return input.printedTotalCents;
   }
-  assertsCents(input.feeCents, "Taxa de serviço");
+  assertCents(input.feeCents, "Taxa de serviço");
   return sumCents(input.items.map((i) => i.totalCents)) + input.feeCents;
 }
