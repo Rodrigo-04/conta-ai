@@ -13,15 +13,16 @@ Aqui lidaremos com:
 
 ## Arquivos
 
-| Nome         | Objetivo                           |
-| ------------ | ---------------------------------- |
-| types.ts     | Definir tipos e objetos para usar. |
-| erros.ts     | Representar erros dos cálculos.    |
-| money.ts     | Validar valores e somar.           |
-| fee.ts       | Calcular taxa de serviço.          |
-| split.ts     | Dividir a conta entre as pessoas.  |
-| remainder.ts | Sorteia a diferença da divisão.    |
-| receipt.ts   | Confere valores e define valor.    |
+| Nome         | Objetivo                                |
+| ------------ | --------------------------------------- |
+| types.ts     | Definir tipos e objetos para usar.      |
+| erros.ts     | Representar erros dos cálculos.         |
+| money.ts     | Validar valores e somar.                |
+| fee.ts       | Calcular taxa de serviço.               |
+| split.ts     | Dividir a conta entre as pessoas.       |
+| remainder.ts | Sorteia a diferença da divisão.         |
+| receipt.ts   | Confere valores e define valor.         |
+| index.js     | Reúne as exportações dos arquivos core. |
 
 Irei usar o Jest para testes automáticos
 
