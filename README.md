@@ -53,12 +53,12 @@ A definir. Os passos entram aqui quando o projeto Expo for criado (Sprint 0).
 
 ### Sprint 1: Módulo de cálculo
 
-- [ ] Divisão igual em centavos inteiros
-- [ ] Divisão por itens, incluindo itens compartilhados
-- [ ] Taxa de serviço igual e proporcional ao consumo
-- [ ] Diferença de centavos: cálculo, sorteio e escolha manual, com resultado gravado
-- [ ] Testes dos casos mínimos (R$ 100 ÷ 3, taxa de 10%, item dividido por 7, 15 pessoas, 0,45 kg)
-- [ ] Teste de propriedade: a soma das pessoas sempre é igual ao total
+- [x] Divisão igual em centavos inteiros
+- [x] Divisão por itens, incluindo itens compartilhados
+- [x] Taxa de serviço igual e proporcional ao consumo
+- [x] Diferença de centavos: cálculo, sorteio e escolha manual, com resultado gravado
+- [x] Testes dos casos mínimos (R$ 100 ÷ 3, taxa de 10%, item dividido por 7, 15 pessoas, 0,45 kg)
+- [x] Teste de propriedade: a soma das pessoas sempre é igual ao total
 
 ### Sprint 2: Fluxo manual
 
