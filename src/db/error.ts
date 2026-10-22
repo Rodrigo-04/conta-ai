@@ -1,6 +1,6 @@
 //Definir os códigos de erro possíveis
 export type AccountErrorCode =
-  | "NOT FOUND"
+  | "NOT_FOUND"
   | "UNKNOWN_PERSON"
   | "INVALID_VALUE"
   | "INCOMPLETE"

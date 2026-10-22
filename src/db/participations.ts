@@ -1,5 +1,6 @@
 import type { Participation } from "../core";
 import { type Db } from "./db";
+import { AccountError } from "./error";
 
 //identifica quem consumiu cada item
 export async function getParticipations(
@@ -28,3 +29,14 @@ export async function getParticipations(
 }
 
 //definir quem consumiu o item
+export async function setItemParticipants(
+    db: Db,
+    itemId: string,
+    PersonIds: readonly string[],
+): Promise<void> {
+    const wanted = new Set(personIds);
+
+    await inTransaction(db, async () => {
+        const item = await 
+    })
+}
