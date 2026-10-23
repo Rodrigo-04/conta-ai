@@ -1,16 +1,19 @@
+//controle de conta
 import { assertCents, DEFAULT_SERVICE_PERCENT, FeeMode } from "../core";
 import { inTransaction, type Db, type SqlParam } from "./db";
 import { AccountError } from "./error";
 import { newId, todayIso } from "./ids";
 import {
-    Account,
-    ContaRow,
-    FEE_MODE_TO_DB,
-    SPLIT_MODE_TO_DB,
-    SplitMode,
-    toAccount,
+  Account,
+  AccountSumary,
+  ContaRow,
+  FEE_MODE_TO_DB,
+  SPLIT_MODE_TO_DB,
+  SplitMode,
+  toAccount,
 } from "./models";
 
+//conta
 export interface NewAccountInput {
   date?: string;
   restaurant?: string | null;
@@ -22,18 +25,20 @@ export interface NewAccountInput {
   photoPath?: string | null;
 }
 
-export interface AccountPath {
+//permite modificar valores de mane
+export interface AccountPatch {
   date?: string;
   restaurant?: string | null;
   printedTotalCents?: number | null;
   feePercent?: number | null;
   feeCents?: number | null;
-  splitmode?: SplitMode;
+  splitMode?: SplitMode;
   feeMode?: FeeMode;
   payerId?: string | null;
   photoPath?: string | null;
 }
 
+//verifica se o valor é válido
 function checkOptionalCents(
   value: number | null | undefined,
   label: string,
@@ -41,6 +46,7 @@ function checkOptionalCents(
   if (value !== undefined && value !== null) assertCents(value, label);
 }
 
+//verifica se o percentual da conta é válido
 function checkPercent(value: number | null | undefined): void {
   if (
     value !== undefined &&
@@ -51,6 +57,7 @@ function checkPercent(value: number | null | undefined): void {
   }
 }
 
+//busca uma conta
 export async function getAccount(db: Db, id: string): Promise<Account | null> {
   const row = await db.getFirstAsync<ContaRow>(
     "SELECT * FROM conta WHERE id = : AND deleted_at IA NULL",
@@ -59,6 +66,7 @@ export async function getAccount(db: Db, id: string): Promise<Account | null> {
   return row ? toAccount(row) : null;
 }
 
+//cria uma conta
 export async function createAccount(
   db: Db,
   input: NewAccountInput = {},
@@ -93,9 +101,9 @@ export async function createAccount(
   return (await getAccount(db, id))!;
 }
 
-//valores que mudam o valor devido: alteralos pode toranar a diferença de centavos errada
+//relaciona as propriedades do TS às colunas do SQL
 const PATCH_COLUMNS: Record<
-  keyof AccountPath,
+  keyof AccountPatch,
   { column: string; affectsResult: boolean }
 > = {
   date: { column: "data", affectsResult: false },
@@ -103,16 +111,17 @@ const PATCH_COLUMNS: Record<
   printedTotalCents: { column: "total_impresso_centavos", affectsResult: true },
   feePercent: { column: "taxa_percentual", affectsResult: true },
   feeCents: { column: "taxa_centavos", affectsResult: true },
-  splitmode: { column: "modo_divisao", affectsResult: true },
+  splitMode: { column: "modo_divisao", affectsResult: true },
   feeMode: { column: "modo_taxa", affectsResult: true },
   payerId: { column: "pagador_id", affectsResult: false },
   photoPath: { column: "foto_caminho_local", affectsResult: false },
 };
 
+//atualizar conta
 export async function updateAccount(
   db: Db,
   id: string,
-  patch: AccountPath,
+  patch: AccountPatch,
 ): Promise<Account> {
   checkOptionalCents(patch.printedTotalCents, "Total da nota");
   checkOptionalCents(patch.feeCents, "Taxa de serviço");
@@ -122,7 +131,7 @@ export async function updateAccount(
   const params: SqlParam[] = [];
   let invalidate = false;
 
-  for (const key of Object.keys(PATCH_COLUMNS) as (keyof AccountPath)[]) {
+  for (const key of Object.keys(PATCH_COLUMNS) as (keyof AccountPatch)[]) {
     const value = patch[key];
     if (value === undefined) continue;
     const { column, affectsResult } = PATCH_COLUMNS[key];
@@ -162,4 +171,75 @@ export async function updateAccount(
       throw new AccountError("NOT_FOUND", "Conta não encontrada.");
   });
   return (await getAccount(db, id))!;
+}
+
+//marca alteração em um conta
+export async function touchAccount(
+  db: Db,
+  accountId: string,
+  invalidateDraw: boolean,
+): Promise<void> {
+  const reset = invalidateDraw
+    ? ", diferenca_centavos = 0, pessoa_diferenca_id = NULL, sorteio_realizado = 0"
+    : "";
+  const result = await db.runAsync(
+    `UPDATE conta SET update_at = ? ${reset} WHERE id = ? AND deleted_at IS NULL`,
+    [Date.now(), accountId],
+  );
+  if (result.changes === 0)
+    throw new AccountError("NOT_FOUND", "Conta não encontrada.");
+}
+
+//exclusão da conta e seus relacionamentos
+export async function deleteAccount(db: Db, id: string): Promise<void> {
+  await inTransaction(db, async () => {
+    const now = Date.now();
+    const result = await db.runAsync(
+      "UPDATE conta SET deleted_at = ?, updated_at = ?, WHERE id = ? AND deleted_at IS NULL",
+      [now, now, id],
+    );
+    if (result.changes === 0)
+      throw new AccountError("NOT_FOUND", "Conta não encontrada.");
+
+    const mark = "SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL";
+    await db.runAsync(
+      `UPDATE consumo ${mark} AND item_id IN (SELECT id FROM item WHERE conta_id = ?)`,
+      [now, now, id],
+    );
+    await db.runAsync(`UPDATE item ${mark} AND conta_id = ?`, [now, now, id]);
+    await db.runAsync(`UPDATE pessoa ${mark} AND conta_id = ?`, [now, now, id]);
+    await db.runAsync(`UPDATE parcela ${mark} AND conta_id = ?`, [
+      now,
+      now,
+      id,
+    ]);
+  });
+}
+
+type SummaryRow = ContaRow & {
+  pessoas: number;
+  subtotal_centavos: number;
+  pendentes: number;
+  pendente_centavos: number;
+};
+
+//lista a conta mais recente com pagamento pendente
+export async function listAccountSummaries(db: Db): Promise<AccountSumary[]> {
+  const rows = await db.getAllAsync<SummaryRow>(
+    `SELECT conta.*,
+            (SELECT COUNT(*) FROM pessoa WHERE pessoa.conta_id = conta.id AND pessoa.deleted_at IS NULL) AS pessoas,
+            (SELECT COALESCE(SUM(item.valor_linha_centavos), 0) FROM item WHERE item.conta_id = conta.id AND item.deleted_at IS NULL) AS subtotal_centavos,
+            (SELECT COUNT(*) FROM parcela WHERE parcela.conta_id = conta.id AND parcela.deleted_at IS NULL AND parcela.staus = 'pendente') AS pendentes,
+            SELECT COALESCE(SUM(parcela.valor_devido_centavos), 0) FROM parcela WHERE parcela.conta_id = conta.id AND parcela.deleted_at IS NULL AND parcela.status = 'pendente') AS pendentes_centavos
+        FROM conta 
+        WHERE conta.deleted_at IS NULL
+        ORDER BY conta.data DESC, conta.create_at DESC`,
+  );
+  return rows.map((r) => ({
+    account: toAccount(r),
+    peopleCount: r.pessoas,
+    itemSubtotalCents: r.subtotal_centavos,
+    pendingCount: r.pendentes,
+    pendingCents: r.pendente_centavos,
+  }));
 }
