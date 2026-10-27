@@ -41,7 +41,7 @@ export async function getItem(db: Db, id: string): Promise<AccountItem | null> {
 }
 
 //listar itens de uma conta
-export async function listItem(
+export async function listItems(
   db: Db,
   accountId: string,
 ): Promise<AccountItem[]> {
