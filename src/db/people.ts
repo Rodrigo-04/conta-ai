@@ -1,6 +1,6 @@
 import { touchAccount } from "./accounts";
 import { inTransaction, SqlParam, type Db } from "./db";
-import { AccountError } from "./error";
+import { AccountError } from "./errors";
 import { newId } from "./ids";
 import { Person, PessoaRow, toPerson } from "./models";
 

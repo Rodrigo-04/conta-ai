@@ -3,7 +3,7 @@
 import { assertCents } from "../core";
 import { touchAccount } from "./accounts";
 import { type Db, inTransaction, type SqlParam } from "./db";
-import { AccountError } from "./error";
+import { AccountError } from "./errors";
 import { newId } from "./ids";
 import { type AccountItem, type ItemRow, toItem } from "./models";
 

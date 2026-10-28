@@ -1,7 +1,7 @@
 //controle de conta
 import { assertCents, DEFAULT_SERVICE_PERCENT, FeeMode } from "../core";
 import { inTransaction, type Db, type SqlParam } from "./db";
-import { AccountError } from "./error";
+import { AccountError } from "./errors";
 import { newId, todayIso } from "./ids";
 import {
   Account,

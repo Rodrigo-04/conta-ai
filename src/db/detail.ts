@@ -2,7 +2,7 @@ import type { Participation } from "@/core";
 import { getAccount } from "./accounts";
 import type { Db } from "./db";
 import { listInstallments } from "./installments";
-import { listItems } from "./item";
+import { listItems } from "./items";
 import type { Account, AccountItem, Installment, Person } from "./models";
 import { getParticipations } from "./participations";
 import { listPeople } from "./people";

@@ -1,9 +1,9 @@
 import type { Participation } from "../core";
 import { touchAccount } from "./accounts";
 import { inTransaction, type Db } from "./db";
-import { AccountError } from "./error";
+import { AccountError } from "./errors";
 import { newId } from "./ids";
-import { getItem } from "./item";
+import { getItem } from "./items";
 
 //identifica quem consumiu cada item
 export async function getParticipations(

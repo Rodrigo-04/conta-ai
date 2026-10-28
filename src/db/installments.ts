@@ -1,14 +1,14 @@
 import { assertCents } from "../core";
 import { touchAccount } from "./accounts";
 import { inTransaction, type Db } from "./db";
-import { AccountError } from "./error";
+import { AccountError } from "./errors";
 import { newId } from "./ids";
 import {
-    STATUS_TO_DB,
-    toInstallment,
-    type Installment,
-    type InstallmentStatus,
-    type ParcelaRow,
+  STATUS_TO_DB,
+  toInstallment,
+  type Installment,
+  type InstallmentStatus,
+  type ParcelaRow,
 } from "./models";
 
 //lista as parcelas ativas
