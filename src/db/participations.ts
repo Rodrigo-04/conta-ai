@@ -35,9 +35,9 @@ export async function getParticipations(
 export async function setItemParticipants(
   db: Db,
   itemId: string,
-  PersonIds: readonly string[],
+  personIds: readonly string[],
 ): Promise<void> {
-  const wanted = new Set(PersonIds);
+  const wanted = new Set(personIds);
 
   await inTransaction(db, async () => {
     const item = await getItem(db, itemId);
@@ -47,9 +47,9 @@ export async function setItemParticipants(
       "SELECT id FROM pessoa WHERE conta_id = ? AND deleted_at IS NULL",
       [item.accountId],
     );
-    const vvalidIds = new Set(valid.map((p) => p.id));
+    const validIds = new Set(valid.map((p) => p.id));
     for (const personId of wanted) {
-      if (!vvalidIds.has(personId)) {
+      if (!validIds.has(personId)) {
         throw new AccountError(
           "UNKNOWN_PERSON",
           `Pessoa fora da conta: ${personId}`,
@@ -71,12 +71,12 @@ export async function setItemParticipants(
       const active = row.deleted_at === null;
       if (wanted.has(row.pessoa_id) && !active) {
         await db.runAsync(
-          "UPDATE consumo SET deleted_at = NULL, update_at = ? WHERE id = ?",
+          "UPDATE consumo SET deleted_at = NULL, updated_at = ? WHERE id = ?",
           [now, row.id],
         );
       } else if (!wanted.has(row.pessoa_id) && active) {
         await db.runAsync(
-          "UPDATE consumo SET deleted_at = ?, update_at = ? WHERE id = ?",
+          "UPDATE consumo SET deleted_at = ?, updated_at = ? WHERE id = ?",
           [now, now, row.id],
         );
       }
@@ -84,8 +84,7 @@ export async function setItemParticipants(
     for (const personId of wanted) {
       if (seen.has(personId)) continue;
       await db.runAsync(
-        `INSERT INTO consumo id = ?, item_id = ?, pessoa_id = ?, created_at = ? updated_at)
-            VALUES (?, ?, ?, ?, ?)`,
+        "INSERT INTO consumo (id, item_id, pessoa_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
         [newId(), itemId, personId, now, now],
       );
     }

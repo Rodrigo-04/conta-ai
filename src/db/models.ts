@@ -24,7 +24,7 @@ export interface Account {
   drawDone: boolean; //se o valor já foi distribuido
   photoPath: string | null;
   createdAt: number;
-  updateAt: number;
+  updatedAt: number;
 }
 
 //itens da conta
@@ -77,11 +77,11 @@ export interface ContaRow {
   taxa_centavos: number | null;
   desconto_centavos: number;
   modo_divisao: "igual" | "itens";
-  modo_taxa: "igual" | "proporrcional";
+  modo_taxa: "igual" | "proporcional";
   pagador_id: string | null;
   diferenca_centavos: number;
   pessoa_diferenca_id: string | null;
-  sorteio_realizado: boolean;
+  sorteio_realizado: number;
   foto_caminho_local: string | null;
   created_at: number;
   updated_at: number;
@@ -141,10 +141,10 @@ export function toAccount(r: ContaRow): Account {
     payerId: r.pagador_id,
     remainderCents: r.diferenca_centavos,
     remainderPersonId: r.pessoa_diferenca_id,
-    drawDone: r.sorteio_realizado,
+    drawDone: r.sorteio_realizado === 1,
     photoPath: r.foto_caminho_local,
     createdAt: r.created_at,
-    updateAt: r.updated_at,
+    updatedAt: r.updated_at,
   };
 }
 
