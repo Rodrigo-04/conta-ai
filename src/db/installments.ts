@@ -14,14 +14,14 @@ import {
 //lista as parcelas ativas
 export async function listInstallments(
   db: Db,
-  acconutId: string,
+  accountId: string,
 ): Promise<Installment[]> {
   const rows = await db.getAllAsync<ParcelaRow>(
-    `SELECT parcel.* FROM parcela
-        JOIN pessoa ON pessoa.id = parcela.pessoa_id
-        WHERE parcela.conta_id = ? AND parcela.deleted_at IS NULL
-        OERDER BY pessoa.ordem, pessoa.created_at`,
-    [acconutId],
+    `SELECT pa.* FROM parcela pa
+       JOIN pessoa pe ON pe.id = pa.pessoa_id
+      WHERE pa.conta_id = ? AND pa.deleted_at IS NULL
+      ORDER BY pe.ordem, pe.created_at`,
+    [accountId],
   );
   return rows.map(toInstallment);
 }
@@ -48,7 +48,7 @@ export async function setInstallmentStatus(
         installmentId,
       ],
     );
-    await touchAccount(db, row.conta_id, false); //não muda valores, mantém a deiferença sorteada
+    await touchAccount(db, row.conta_id, false); // não muda valores, mantém a diferença sorteada
   });
   const row = await db.getFirstAsync<ParcelaRow>(
     "SELECT * FROM parcela WHERE id = ?",
@@ -107,14 +107,14 @@ export async function saveSplitResult(
       //atualizar ou criar parcela
       if (current) {
         await db.runAsync(
-          `UPDATE parcela SET valor_devido_centavos = ?, status = ?, pago_em = ?, deleted_at = NULL, update_at = ?,
-                WHERE id = ?`,
+          `UPDATE parcela SET valor_devido_centavos = ?, status = ?, pago_em = ?, deleted_at = NULL,
+                  updated_at = ? WHERE id = ?`,
           [share.amountCents, status, paidAt, now, current.id],
         );
       } else {
         await db.runAsync(
           `INSERT INTO parcela (id, conta_id, pessoa_id, valor_devido_centavos, status, pago_em, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             newId(),
             accountId,
@@ -143,13 +143,15 @@ export async function saveSplitResult(
     }
 
     //salvar diferença de centavos na conta
-    const draw = input.remainder.cents > 0 && input.remainder.personId !== null;
+    const drawn =
+      input.remainder.cents > 0 && input.remainder.personId !== null;
     await db.runAsync(
-      `UPDATE conta SET diferenca_centavos = ?, pessoa_diferenca_id = ?, sorteio_realizado = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE conta SET diferenca_centavos = ?, pessoa_diferenca_id = ?, sorteio_realizado = ?, updated_at = ?
+        WHERE id = ?`,
       [
         input.remainder.cents,
-        draw ? input.remainder.personId : null,
-        draw ? 1 : 0,
+        drawn ? input.remainder.personId : null,
+        drawn ? 1 : 0,
         now,
         accountId,
       ],

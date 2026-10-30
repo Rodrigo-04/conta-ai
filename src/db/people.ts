@@ -5,9 +5,10 @@ import { newId } from "./ids";
 import { Person, PessoaRow, toPerson } from "./models";
 
 //criar objeto pessoa
+
 export interface NewPersonInput {
   name: string;
-  nickName?: string | null;
+  nickname?: string | null;
 }
 
 export type PersonPatch = Partial<NewPersonInput>;
@@ -21,28 +22,25 @@ function checkName(name: string): string {
 }
 
 //tratar nickname
-function clearNickname(nickname: string | null | undefined): string | null {
+function cleanNickname(nickname: string | null | undefined): string | null {
   const trimmed = nickname?.trim();
   return trimmed ? trimmed : null;
 }
 
 //buscar pessoa
 export async function getPerson(db: Db, id: string): Promise<Person | null> {
-  const row = await db.getFirstAsync<PessoaRow | null>(
-    "SELECT * FROM pessoa where id = ? AND deleted_at IS NULL",
+  const row = await db.getFirstAsync<PessoaRow>(
+    "SELECT * FROM pessoa WHERE id = ? AND deleted_at IS NULL",
     [id],
   );
   return row ? toPerson(row) : null;
 }
 
 //listar pessoas da conta
-export async function listPeople(
-  db: Db,
-  accoountId: string,
-): Promise<Person[]> {
+export async function listPeople(db: Db, accountId: string): Promise<Person[]> {
   const rows = await db.getAllAsync<PessoaRow>(
-    "SELECT * FROM pessoa WHERE id = ? AND deleted_at IS NULL ORDER BY ordem, created_at",
-    [accoountId],
+    "SELECT * FROM pessoa WHERE conta_id = ? AND deleted_at IS NULL ORDER BY ordem, created_at",
+    [accountId],
   );
   return rows.map(toPerson);
 }
@@ -61,15 +59,15 @@ export async function addPerson(
       "SELECT COALESCE(MAX(ordem) + 1, 0) AS proxima FROM pessoa WHERE conta_id = ? AND deleted_at IS NULL",
       [accountId],
     );
-    await touchAccount(db, accountId, true); //quando entra uma pessoa na conta o cálculo precisa ser alterado
+    await touchAccount(db, accountId, true); // quem entra muda a divisão
     await db.runAsync(
       `INSERT INTO pessoa (id, conta_id, nome, apelido, ordem, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         accountId,
         name,
-        clearNickname(input.nickName),
+        cleanNickname(input.nickname),
         next?.proxima ?? 0,
         now,
         now,
@@ -91,9 +89,9 @@ export async function updatePerson(
     sets.push("nome = ?");
     params.push(checkName(patch.name));
   }
-  if (patch.nickName !== undefined) {
+  if (patch.nickname !== undefined) {
     sets.push("apelido = ?");
-    params.push(clearNickname(patch.nickName));
+    params.push(cleanNickname(patch.nickname));
   }
 
   await inTransaction(db, async () => {
@@ -105,7 +103,7 @@ export async function updatePerson(
         [...params, Date.now(), id],
       );
     }
-    await touchAccount(db, current.accountId, false); //nome e apelido não mudam
+    await touchAccount(db, current.accountId, false); // nome e apelido não mudam valores
   });
   return (await getPerson(db, id))!;
 }
@@ -129,7 +127,7 @@ export async function removePerson(db: Db, id: string): Promise<void> {
       [now, now, id],
     );
     await db.runAsync(
-      "UPDATE const SET pagador_id = NULL WHERE id = ? AND pagador_id = ?",
+      "UPDATE conta SET pagador_id = NULL WHERE id = ? AND pagador_id = ?",
       [current.accountId, id],
     );
     await touchAccount(db, current.accountId, true);

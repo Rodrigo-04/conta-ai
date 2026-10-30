@@ -20,40 +20,40 @@ export const MIGRATIONS: readonly Migration[] = [
     version: 1,
     name: "esquema inicial",
     sql: `
-        CREATE TABLE conta (
-            id TEXT PRIMARY KEY NOT NULL,
-            user_id TEXT,
-            data TEXT NOT NULL,
-            restaurant TEXT,
-            total_impresso_centavos INTEGER CHECK (total_impresso_centavos IS NULL OR total_impresso_centavos > =0),
-            taxa_percentual REAL CHECK (taxa_percentual IS NULL OR taxa_percentual >=  0),
-            taxa_centavos INTEGAR CHECK (taxa_centavos IS NULL OR taxa_centavos >= 0),
-            desconto_centavos    integer not null default 0 check (desconto_centavos >= 0),
-            modo_divisao TEXT NOT NULL DEFAULLT 'itens' CHECK (modo_divisao IN ('igual', 'itens')),
-            modo_taxa TEXT NOT NULL DEFAULT 'igual' CHHEK (modo_taxa IN ('igual', 'proporcional')),
-            pagador_id TEXT REFERENCERS pessoa(id),
-            diferenca_centavos INTEGER NOT NULL DEFAULT 0 CHECK (diferenca_centavos >= 0),
-            pessoa_diferenca_id TEXT REFERENCES pessoa(id),
-            sorteio_realizado INTEGER NOT NULL DEFAULT 0 CHECK (sorteio_realizado IN (0, 1)),
-            foto_caminho_local TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            deleted_at INTEGR
-        );
-        
-        CREATE TABLE pessoa (
-            id TEXT PRIMARY KEY NOT NULL,
-            user_id TEXT,
-            conta_id TEXT NOT ULL REFERENCES conta(id),
-            nome TEXT NOT NULL,
-            apelido TEXT,
-            ordem INTEGER NOT NULL DEFAULT 0,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            deleted_at INTEGER
-        );
-        
-        CREATE TABLE item (
+      CREATE TABLE conta (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT,
+        data TEXT NOT NULL,
+        restaurante TEXT,
+        total_impresso_centavos INTEGER CHECK (total_impresso_centavos IS NULL OR total_impresso_centavos >= 0),
+        taxa_percentual REAL CHECK (taxa_percentual IS NULL OR taxa_percentual >= 0),
+        taxa_centavos INTEGER CHECK (taxa_centavos IS NULL OR taxa_centavos >= 0),
+        desconto_centavos INTEGER NOT NULL DEFAULT 0 CHECK (desconto_centavos >= 0),
+        modo_divisao TEXT NOT NULL DEFAULT 'itens' CHECK (modo_divisao IN ('igual', 'itens')),
+        modo_taxa TEXT NOT NULL DEFAULT 'igual' CHECK (modo_taxa IN ('igual', 'proporcional')),
+        pagador_id TEXT REFERENCES pessoa(id),
+        diferenca_centavos INTEGER NOT NULL DEFAULT 0 CHECK (diferenca_centavos >= 0),
+        pessoa_diferenca_id TEXT REFERENCES pessoa(id),
+        sorteio_realizado INTEGER NOT NULL DEFAULT 0 CHECK (sorteio_realizado IN (0, 1)),
+        foto_caminho_local TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      );
+
+      CREATE TABLE pessoa (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT,
+        conta_id TEXT NOT NULL REFERENCES conta(id),
+        nome TEXT NOT NULL,
+        apelido TEXT,
+        ordem INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      );
+
+      CREATE TABLE item (
         id TEXT PRIMARY KEY NOT NULL,
         user_id TEXT,
         conta_id TEXT NOT NULL REFERENCES conta(id),
@@ -97,7 +97,7 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX idx_consumo_item ON consumo (item_id);
       CREATE INDEX idx_consumo_pessoa ON consumo (pessoa_id);
       CREATE INDEX idx_parcela_conta ON parcela (conta_id);
-      `,
+    `,
   },
 ];
 

@@ -5,7 +5,7 @@ import { AccountError } from "./errors";
 import { newId, todayIso } from "./ids";
 import {
   Account,
-  AccountSumary,
+  AccountSummary,
   ContaRow,
   FEE_MODE_TO_DB,
   SPLIT_MODE_TO_DB,
@@ -20,7 +20,7 @@ export interface NewAccountInput {
   printedTotalCents?: number | null;
   feePercent?: number | null;
   feeCents?: number | null;
-  splitmode?: SplitMode;
+  splitMode?: SplitMode;
   feeMode?: FeeMode;
   photoPath?: string | null;
 }
@@ -53,14 +53,14 @@ function checkPercent(value: number | null | undefined): void {
     value !== null &&
     (!Number.isFinite(value) || value < 0)
   ) {
-    throw new AccountError("INVALID_VALUE", `Percentual inválido ${value}`);
+    throw new AccountError("INVALID_VALUE", `Percentual inválido: ${value}`);
   }
 }
 
 //busca uma conta
 export async function getAccount(db: Db, id: string): Promise<Account | null> {
   const row = await db.getFirstAsync<ContaRow>(
-    "SELECT * FROM conta WHERE id = : AND deleted_at IA NULL",
+    "SELECT * FROM conta WHERE id = ? AND deleted_at IS NULL",
     [id],
   );
   return row ? toAccount(row) : null;
@@ -79,8 +79,9 @@ export async function createAccount(
   const now = Date.now();
   await inTransaction(db, async () => {
     await db.runAsync(
-      `INSERT INTO conta (id, data, restaurante, total_impresso_centavos, taxa_percentual, taxa_centavos, modo_divisao, modo_taxa, foto_caminho_local, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO conta (id, data, restaurante, total_impresso_centavos, taxa_percentual, taxa_centavos,
+                          modo_divisao, modo_taxa, foto_caminho_local, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.date ?? todayIso(),
@@ -90,7 +91,7 @@ export async function createAccount(
           ? DEFAULT_SERVICE_PERCENT
           : input.feePercent,
         input.feeCents ?? null,
-        SPLIT_MODE_TO_DB[input.splitmode ?? "items"],
+        SPLIT_MODE_TO_DB[input.splitMode ?? "items"],
         FEE_MODE_TO_DB[input.feeMode ?? "equal"],
         input.photoPath ?? null,
         now,
@@ -144,8 +145,8 @@ export async function updateAccount(
 
   await inTransaction(db, async () => {
     if (patch.payerId) {
-      const person = await db.getFirstAsync<[id: string]>(
-        "SELECT id FROM pessoa WHERE id = ? AND deleted_at IS NULL",
+      const person = await db.getFirstAsync<{ id: string }>(
+        "SELECT id FROM pessoa WHERE id = ? AND conta_id = ? AND deleted_at IS NULL",
         [patch.payerId, id],
       );
       if (!person)
@@ -158,13 +159,13 @@ export async function updateAccount(
       sets.push(
         "diferenca_centavos = 0",
         "pessoa_diferenca_id = NULL",
-        "sorteio_realizdo = 0",
+        "sorteio_realizado = 0",
       );
     }
-    sets.push("update_at = ?");
+    sets.push("updated_at = ?");
     params.push(Date.now(), id);
     const result = await db.runAsync(
-      `UPDATE conta SET ${sets.join(",")} WHERE id = ? AND deleted_at IS NULL`,
+      `UPDATE conta SET ${sets.join(", ")} WHERE id = ? AND deleted_at IS NULL`,
       params,
     );
     if (result.changes === 0)
@@ -183,7 +184,7 @@ export async function touchAccount(
     ? ", diferenca_centavos = 0, pessoa_diferenca_id = NULL, sorteio_realizado = 0"
     : "";
   const result = await db.runAsync(
-    `UPDATE conta SET update_at = ? ${reset} WHERE id = ? AND deleted_at IS NULL`,
+    `UPDATE conta SET updated_at = ?${reset} WHERE id = ? AND deleted_at IS NULL`,
     [Date.now(), accountId],
   );
   if (result.changes === 0)
@@ -195,7 +196,7 @@ export async function deleteAccount(db: Db, id: string): Promise<void> {
   await inTransaction(db, async () => {
     const now = Date.now();
     const result = await db.runAsync(
-      "UPDATE conta SET deleted_at = ?, updated_at = ?, WHERE id = ? AND deleted_at IS NULL",
+      "UPDATE conta SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL",
       [now, now, id],
     );
     if (result.changes === 0)
@@ -224,21 +225,24 @@ type SummaryRow = ContaRow & {
 };
 
 //lista a conta mais recente com pagamento pendente
-export async function listAccountSummaries(db: Db): Promise<AccountSumary[]> {
+export async function listAccountSummaries(db: Db): Promise<AccountSummary[]> {
   const rows = await db.getAllAsync<SummaryRow>(
-    `SELECT conta.*,
-            (SELECT COUNT(*) FROM pessoa WHERE pessoa.conta_id = conta.id AND pessoa.deleted_at IS NULL) AS pessoas,
-            (SELECT COALESCE(SUM(item.valor_linha_centavos), 0) FROM item WHERE item.conta_id = conta.id AND item.deleted_at IS NULL) AS subtotal_centavos,
-            (SELECT COUNT(*) FROM parcela WHERE parcela.conta_id = conta.id AND parcela.deleted_at IS NULL AND parcela.staus = 'pendente') AS pendentes,
-            SELECT COALESCE(SUM(parcela.valor_devido_centavos), 0) FROM parcela WHERE parcela.conta_id = conta.id AND parcela.deleted_at IS NULL AND parcela.status = 'pendente') AS pendentes_centavos
-        FROM conta 
-        WHERE conta.deleted_at IS NULL
-        ORDER BY conta.data DESC, conta.create_at DESC`,
+    `SELECT c.*,
+       (SELECT COUNT(*) FROM pessoa p WHERE p.conta_id = c.id AND p.deleted_at IS NULL) AS pessoas,
+       (SELECT COALESCE(SUM(i.valor_linha_centavos), 0) FROM item i
+          WHERE i.conta_id = c.id AND i.deleted_at IS NULL) AS subtotal_centavos,
+       (SELECT COUNT(*) FROM parcela p WHERE p.conta_id = c.id AND p.deleted_at IS NULL
+          AND p.status = 'pendente') AS pendentes,
+       (SELECT COALESCE(SUM(p.valor_devido_centavos), 0) FROM parcela p WHERE p.conta_id = c.id
+          AND p.deleted_at IS NULL AND p.status = 'pendente') AS pendente_centavos
+     FROM conta c
+     WHERE c.deleted_at IS NULL
+     ORDER BY c.data DESC, c.created_at DESC`,
   );
   return rows.map((r) => ({
     account: toAccount(r),
     peopleCount: r.pessoas,
-    itemSubtotalCents: r.subtotal_centavos,
+    itemsSubtotalCents: r.subtotal_centavos,
     pendingCount: r.pendentes,
     pendingCents: r.pendente_centavos,
   }));

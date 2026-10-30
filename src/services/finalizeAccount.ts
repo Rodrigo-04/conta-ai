@@ -1,10 +1,8 @@
 import { applyRemainder } from "../core";
-import {
-    AccountError,
-    type Db,
-    loadAccountDetail,
-    saveSplitResult,
-} from "../db";
+import type { Db } from "../db/db";
+import { loadAccountDetail } from "../db/detail";
+import { AccountError } from "../db/errors";
+import { saveSplitResult } from "../db/installments";
 import { calculateAccount } from "./calculateAccount";
 
 //quem recebe a diferença dos centavos
@@ -20,7 +18,7 @@ export interface FinalizedShare {
 }
 
 //fecha a conta com os cálculos aplicados
-export async function FinalizeAccount(
+export async function finalizeAccount(
   db: Db,
   accountId: string,
   options: FinalizeOptions = {},
@@ -51,13 +49,13 @@ export async function FinalizeAccount(
     if (!recipientId) {
       throw new AccountError(
         "RECIPIENT_REQUIRED",
-        "Escolha ou sorteia quem fica com a diferença de valor.",
+        "Escolha ou sorteie quem fica com a diferença.",
       );
     }
     if (!personIds.includes(recipientId)) {
       throw new AccountError(
         "UNKNOWN_PERSON",
-        "Quem fica com a diferença precisa ser uma pessoa da conta.",
+        "Quem fica com a diferença precisa ser da conta.",
       );
     }
   }
@@ -67,11 +65,10 @@ export async function FinalizeAccount(
     remainderCents,
     recipientId ?? personIds[0],
   );
-  //guardar no banco de dados o resultado
   await saveSplitResult(db, accountId, {
     shares: final.map((s) => ({
       personId: s.personId,
-      amountCents: s.adjustmentCents,
+      amountCents: s.finalCents,
     })),
     remainder: { cents: remainderCents, personId: recipientId },
   });

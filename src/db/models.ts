@@ -29,7 +29,7 @@ export interface Account {
 
 //itens da conta
 export interface AccountItem extends Item {
-  accontId: string;
+  accountId: string;
   order: number;
 }
 
@@ -58,10 +58,10 @@ export function personLabel(person: Pick<Person, "name" | "nickname">): string {
 }
 
 //resumo da conta
-export interface AccountSumary {
+export interface AccountSummary {
   account: Account;
   peopleCount: number;
-  itemSubtotalCents: number;
+  itemsSubtotalCents: number;
   pendingCount: number;
   pendingCents: number;
 }
@@ -163,7 +163,7 @@ export function toPerson(r: PessoaRow): Person {
 export function toItem(r: ItemRow): AccountItem {
   return {
     id: r.id,
-    accontId: r.conta_id,
+    accountId: r.conta_id,
     name: r.nome,
     quantity: r.quantidade,
     totalCents: r.valor_linha_centavos,

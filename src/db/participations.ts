@@ -45,7 +45,7 @@ export async function setItemParticipants(
 
     const valid = await db.getAllAsync<{ id: string }>(
       "SELECT id FROM pessoa WHERE conta_id = ? AND deleted_at IS NULL",
-      [item.accontId],
+      [item.accountId],
     );
     const vvalidIds = new Set(valid.map((p) => p.id));
     for (const personId of wanted) {
@@ -89,7 +89,7 @@ export async function setItemParticipants(
         [newId(), itemId, personId, now, now],
       );
     }
-    await touchAccount(db, item.accontId, true);
+    await touchAccount(db, item.accountId, true);
   });
 }
 

@@ -27,7 +27,7 @@ function checkName(name: string): string {
 //válida a quantidade
 function checkQuantity(quantity: number): void {
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AccountError("INVALID_VALUE", `Quantidade inválida ${quantity}`);
+    throw new AccountError("INVALID_VALUE", `Quantidade inválida: ${quantity}`);
   }
 }
 
@@ -67,13 +67,13 @@ export async function addItem(
   await inTransaction(db, async () => {
     const now = Date.now();
     const next = await db.getFirstAsync<{ proxima: number }>(
-      "SELECT COALESCE(MAX(ordem + 1, 0) AS proxima FROM item WHERE conta_id = ? AND deleted_at IS NULL",
+      "SELECT COALESCE(MAX(ordem) + 1, 0) AS proxima FROM item WHERE conta_id = ? AND deleted_at IS NULL",
       [accountId],
     );
-    await touchAccount(db, accountId, true);
+    await touchAccount(db, accountId, true); // falha com NOT_FOUND se a conta não existir
     await db.runAsync(
       `INSERT INTO item (id, conta_id, nome, quantidade, valor_linha_centavos, ordem, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         accountId,
@@ -121,7 +121,7 @@ export async function updateItem(
         [...params, Date.now(), id],
       );
     }
-    await touchAccount(db, current.accontId, true);
+    await touchAccount(db, current.accountId, true);
   });
   return (await getItem(db, id))!;
 }
@@ -140,6 +140,6 @@ export async function removeItem(db: Db, id: string): Promise<void> {
       "UPDATE item SET deleted_at = ?, updated_at = ? WHERE id = ?",
       [now, now, id],
     );
-    await touchAccount(db, current.accontId, true);
+    await touchAccount(db, current.accountId, true);
   });
 }

@@ -1,14 +1,14 @@
 import {
-    type Cents,
-    type PersonShare,
-    type PersonTotal,
-    resolveBillTotal,
-    resolveServiceFee,
-    splitByItems,
-    splitEqual,
-    sumCents,
+  resolveBillTotal,
+  resolveServiceFee,
+  splitByItems,
+  splitEqual,
+  sumCents,
+  type Cents,
+  type PersonShare,
+  type PersonTotal,
 } from "../core";
-import { AccountDetail } from "../db";
+import type { AccountDetail } from "../db/detail";
 
 //motivos de erro
 export type IncompleteReason =
