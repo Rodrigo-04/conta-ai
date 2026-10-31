@@ -48,7 +48,7 @@ A definir. Os passos entram aqui quando o projeto Expo for criado (Sprint 0).
 - [x] Criar o projeto Expo com TypeScript e `expo-router`
 - [x] Configurar o _development build_ (necessário para o OCR)
 - [ ] Definir a estrutura de pastas (UI, módulo de cálculo, banco, sincronização)
-- [ ] Configurar `expo-sqlite` e as migrações do esquema (conta, item, pessoa, consumo, parcela)
+- [x] Configurar `expo-sqlite` e as migrações do esquema (conta, item, pessoa, consumo, parcela)
 - [ ] Configurar lint, formatação e ambiente de testes
 
 ### Sprint 1: Módulo de cálculo
