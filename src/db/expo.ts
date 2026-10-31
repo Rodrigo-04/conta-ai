@@ -28,3 +28,17 @@ export async function openAppDatabase(): Promise<Db> {
   await migrate(db);
   return db;
 }
+
+//variável de abertura
+let opening: Promise<Db> | null = null;
+
+//devolve sempre o mesmo banco, abrindo e migrando uma única vez
+export function getAppDatabase(): Promise<Db> {
+  if (!opening) {
+    opening = openAppDatabase().catch((error) => {
+      opening = null;
+      throw error;
+    });
+  }
+  return opening;
+}

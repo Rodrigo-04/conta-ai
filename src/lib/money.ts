@@ -16,7 +16,7 @@ export function formatCentsPlain(cents: number): string {
     ".",
   );
   const rest = String(abs % 100).padStart(2, "0");
-  return `${negative ? "-" : ""}${reais}, ${rest}`;
+  return `${negative ? "-" : ""}${reais},${rest}`;
 }
 
 //formatar centavos colocando R$

@@ -1,15 +1,15 @@
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-    type StyleProp,
-    type ViewStyle,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import {
-    centsToInputText,
-    digitsToCents,
-    MAX_MONEY_DIGITS,
+  centsToInputText,
+  digitsToCents,
+  MAX_MONEY_DIGITS,
 } from "../lib/money";
 import { colors, radius, spacing } from "./theme";
 
@@ -23,7 +23,7 @@ interface MoneyInputProps {
   style?: StyleProp<ViewStyle>;
 }
 
-//campo de valor em reaias (digita o número e avírguna entra sozinha)
+//campo de valor em reais (digita o número e avírguna entra sozinha)
 export function MoneyInput({
   value,
   onChangeCents,
@@ -51,6 +51,7 @@ export function MoneyInput({
   );
 }
 
+//estilo do campo
 const styles = StyleSheet.create({
   box: {
     flexDirection: "row",

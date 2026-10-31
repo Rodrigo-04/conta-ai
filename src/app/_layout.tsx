@@ -1,5 +1,8 @@
 import { Stack } from "expo-router";
+import { DatabaseProvider } from "../db/DatabaseProvider";
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  <DatabaseProvider>
+    return <Stack screenOptions={{ headerShown: false }} />;
+  </DatabaseProvider>;
 }
