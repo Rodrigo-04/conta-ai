@@ -1,9 +1,9 @@
 import {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
 } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { colors, spacing, text } from "../ui/theme";

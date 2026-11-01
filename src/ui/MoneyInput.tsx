@@ -45,7 +45,7 @@ export function MoneyInput({
         autoFocus={autoFocus}
         accessibilityLabel={accessibilityLabel}
         onChangeText={(next) => onChangeCents(digitsToCents(next, maxDigits))}
-        selection={{ start: text.length, end: TextInput.length }} //cursor sempre no fim, o valor que se move
+        selection={{ start: text.length, end: text.length }} //cursor sempre no fim, o valor que se move
       />
     </View>
   );
