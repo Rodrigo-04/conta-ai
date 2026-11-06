@@ -62,7 +62,7 @@ A definir. Os passos entram aqui quando o projeto Expo for criado (Sprint 0).
 
 ### Sprint 2: Fluxo manual
 
-- [ ] Tela inicial com lista de contas e botão "Nova conta"
+- [x] Tela inicial com lista de contas e botão "Nova conta"
 - [ ] Cadastro e edição de itens (nome, quantidade, valor da linha)
 - [ ] Cadastro de pessoas (nome e apelido) e escolha do pagador
 - [ ] Escolha do modo de divisão e da regra da taxa
