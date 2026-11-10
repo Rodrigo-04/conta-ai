@@ -61,6 +61,8 @@ export default function ItemStep() {
   const [cents, setCents] = useState(0);
   const [quantityText, setQuantityText] = useState("1");
   const nameInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const scrollToEndNext = useRef(false); //rolar até o fim quando a lista crescer
 
   //atualizar informações com o banco de dados
   const reload = useCallback(async () => {
@@ -115,6 +117,18 @@ export default function ItemStep() {
     setUnsaved(value.trim() !== restaurantSaved.current.trim());
   };
 
+  //rolar até o fim da lista, onde o item novo aparece
+  const scrollToEndSoon = () => {
+    scrollToEndNext.current = true;
+    //garante a rolagem mesmo se a lista não mudar de tamanho (ex.: edição)
+    setTimeout(() => {
+      if (scrollToEndNext.current) {
+        scrollToEndNext.current = false;
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }
+    }, 500);
+  };
+
   //limpar formulário
   const resetForm = () => {
     setEditingId(null);
@@ -135,7 +149,8 @@ export default function ItemStep() {
         await updateItem(db, editingId, { name, quantity, totalCents: cents });
       else await addItem(db, id, { name, quantity, totalCents: cents });
       resetForm();
-      await reload;
+      scrollToEndSoon();
+      await reload();
       nameInput.current?.focus();
     } catch (error) {
       Alert.alert("Não foi possível salvar o item", messageOf(error));
@@ -148,6 +163,7 @@ export default function ItemStep() {
     setName(item.name);
     setCents(item.totalCents);
     setQuantityText(formatQuantity(item.quantity));
+    scrollRef.current?.scrollTo({ y: 0, animated: true }); //mostra o formulário
     nameInput.current?.focus();
   };
 
@@ -182,8 +198,15 @@ export default function ItemStep() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (scrollToEndNext.current) {
+              scrollToEndNext.current = false;
+              scrollRef.current?.scrollToEnd({ animated: true });
+            }
+          }}
         >
           <StepHeader step="Itens" />
 
@@ -248,9 +271,9 @@ export default function ItemStep() {
             )}
           </View>
 
+          {/* lista resumida, no fim da tela: os itens entram embaixo, na ordem em que são adicionados */}
           <View style={styles.listHeader}>
             <Text style={text.heading}>Itens ({items.length})</Text>
-            <Text style={text.body}>Subtotal: {formatCents(subtotal)}</Text>
           </View>
 
           {items.length === 0 ? (
@@ -259,41 +282,52 @@ export default function ItemStep() {
               de cada linha.
             </Text>
           ) : (
-            items.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => startEdit(item)}
-                accessibilityRole="button"
-                accessibilityHint="Toque para editar"
-                style={({ pressed }) => [
-                  styles.itemRow,
-                  item.id === editingId && styles.itemRowEditing,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={styles.itemInfo}>
-                  <Text style={text.body} numberOfLines={2}>
+            <View style={styles.table}>
+              <View style={styles.tableHead}>
+                <Text style={[text.caption, styles.colName]}>Item</Text>
+                <Text style={[text.caption, styles.colQty]}>Qtd.</Text>
+                <Text style={[text.caption, styles.colPrice]}>Preço</Text>
+                <View style={styles.colRemove} />
+              </View>
+
+              {items.map((item) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => startEdit(item)}
+                  accessibilityRole="button"
+                  accessibilityHint="Toque para editar"
+                  style={({ pressed }) => [
+                    styles.tableRow,
+                    item.id === editingId && styles.itemRowEditing,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={[text.body, styles.colName]} numberOfLines={2}>
                     {item.name}
                   </Text>
-                  {item.quantity !== 1 && (
-                    <Text style={text.caption}>
-                      Qtd.: {formatQuantity(item.quantity)}
-                    </Text>
-                  )}
-                </View>
-                <Text style={styles.itemValue}>
-                  {formatCents(item.totalCents)}
-                </Text>
-                <Pressable
-                  onPress={() => confirmRemove(item)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remover ${item.name}`}
-                >
-                  <Text style={styles.remove}>Remover</Text>
+                  <Text style={[text.body, styles.colQty]}>
+                    {formatQuantity(item.quantity)}
+                  </Text>
+                  <Text style={[styles.itemValue, styles.colPrice]}>
+                    {formatCents(item.totalCents)}
+                  </Text>
+                  <Pressable
+                    onPress={() => confirmRemove(item)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover ${item.name}`}
+                    style={styles.colRemove}
+                  >
+                    <Text style={styles.remove}>✕</Text>
+                  </Pressable>
                 </Pressable>
-              </Pressable>
-            ))
+              ))}
+
+              <View style={styles.tableTotal}>
+                <Text style={text.heading}>Subtotal</Text>
+                <Text style={text.heading}>{formatCents(subtotal)}</Text>
+              </View>
+            </View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -324,21 +358,46 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
   },
   emptyText: { textAlign: "center", paddingVertical: spacing.md },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    padding: spacing.md,
+  table: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
+    overflow: "hidden",
   },
+  tableHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surface,
+  },
+  tableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  tableTotal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  colName: { flex: 1 },
+  colQty: { width: 48, textAlign: "right" },
+  colPrice: { width: 96, textAlign: "right" },
+  colRemove: { width: 32, alignItems: "center" },
   itemRowEditing: {
     borderColor: colors.primary,
     backgroundColor: colors.successSoft,
   },
   pressed: { opacity: 0.85 },
-  itemInfo: { flex: 1, gap: spacing.xs },
   itemValue: { fontSize: 16, fontWeight: "600", color: colors.text },
-  remove: { fontSize: 13, color: colors.danger },
+  remove: { fontSize: 16, color: colors.danger },
 });
