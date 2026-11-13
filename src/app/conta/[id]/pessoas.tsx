@@ -3,9 +3,13 @@ import { addPerson, getAccount, listPeople, Person, personLabel, removePerson, u
 import * as ExpoRouter from "expo-router";
 import { useFocusEffect } from "expo-router/build/react-navigation/index.js";
 import { type ComponentRef, useCallback, useRef, useState } from "react";
-import { Alert, TextInput } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useDb } from "../../../db/DatabaseProvider";
-import { colors, radius, spacing } from "../../../ui/theme";
+import { colors, radius, spacing, text } from "../../../ui/theme";
+import { Screen } from "@/ui/Screen";
+import { StepHeader } from "@/ui/StepHeader";
+import { TextField } from "@/ui/TextField";
+import { Button } from "@/ui/Button";
 
 //transformar erro em mensagem
 function messageOf(error: unknown): string {
@@ -25,7 +29,7 @@ export default function PeopleStep() {
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const nameInput = useRef<ComponentRef<typeof TextInput>>(null);
-  const nickNameInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const nicknameInput = useRef<ComponentRef<typeof TextInput>>(null);
   const scrollRef = useRef<ComponentRef<typeof TextInput>>(null);
   const scrollToEndNext = useRef(false); //rolar até o fim da listaw
 
@@ -135,6 +139,105 @@ export default function PeopleStep() {
 
   //interface
   return (
+    <Screen edges={["bottom", "left", "right"]}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" onContentSizeChange={() => {
+          if (scrollToEndNext.current) {
+            scrollToEndNext.current = false;
+            scrollRef.current?.scrollToend({animated: true});
+          }
+        }}>
+          <StepHeader step="Pessoas" />
+          <View style={styles.form}>
+            <Text style={text.heading}>
+              {editingId ? "Editar pessoa" : "adicionar pessoa"}
+            </Text>
+            <TextField ref={nameInput} label="Nome" placeholder="Ex.: Ana Souza"
+              value={name} onChangeText={setName} autoCapitalize="words" returnKeyType="next"
+              onSubmitEditing={() => nicknameInput.current?.focus()}
+            />
+            <TextField ref={nicknameInput} label="Apelido (opcional)"  placeholder="Ex.: Aninha"
+              value={nickname} onChangeText={setNickname} autoCapitalize="words" returnKeyType="done"
+              onSubmitEditing={savePerson}
+            />
+            {duplicate && (
+              <Text style={styles.error}>
+                Já existe alguém com esse nome. use um apelido para distinguir.
+              </Text>
+            )}
+            <Button title={editingId ? "Salvar alterações" : "adicionar"}
+              onPress={savePerson} disabled={!canSave}
+            />
+            {editingId && (
+              <Button title="Cancelar edição" variant="secondary" onPress={resetForm} />
+            )}
+          </View>
+          
+          {/* lista no fim da tela */}
+          <View style={styles.listHeader}>
+            <Text style={text.heading}>Pessoas ({people.length})</Text>
+          </View>
+
+          {people.length === 0 ? (
+            <Text style={[text.caption, styles.emptyText]}>
+              Nenhuma pessoa ainda. Adicione quem estava na mesa. Um toque em "Pagou?" marca quem pagou a conta (pode ficar para depois).
+            </Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tableHead}>
+                <Text style={[text.caption, styles.colName]}>Pessoa</Text>
+                <Text style={[text.caption, styles.colPayer]}>Pagou a conta</Text>
+                <View style={styles.colRemove} />
+              </View>
+
+              {people.map((person) => {
+                const isPayer = person.id === payerId;
+                return (
+                  <Pressable key={person.id}
+                  onPress={() => startEdit(person)} accessibilityRole="button" accessibilityHint="Toque para editar"
+                  style={({pressed}) => [styles.tableRow, person.id === editingId && styles.rowEditing,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.colName}>
+                    <Text style={text.body} numberOfLines={1}>
+                      {personLabel(person)}
+                    </Text>
+                    {person.nickname?.trim() ? (
+                      <Text style={text.caption} numberOfLines={1}>
+                        {person.name}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Pressable
+                    onPress={() => togglePayer(person)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isPayer ? `Desmarcar ${personLabel(person)} como quem pagou` : `Marcar ${personLabel(person)} como quem pagou`
+                    }
+                    style={[styles.chip, isPayer && styles.chipOn]}
+                  >
+                    <Text style={[styles.chipText, isPayer && styles.chipTextOn]} >
+                      {isPayer ? "Pagou" : "Pagou?"}
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => confirmRemove(person)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover ${personLabel(person)}`}
+                    style={styles.colRemove}
+                  >
+                    <Text style={styles.remove}>X</Text>
+                  </Pressable>
+                </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 };
 
