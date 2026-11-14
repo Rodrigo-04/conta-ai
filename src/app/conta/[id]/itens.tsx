@@ -48,6 +48,8 @@ export default function ItemStep() {
   const { id } = ExpoRouter.useLocalSearchParams<{ id: string }>();
   //banco de dados
   const db = useDb();
+  //navegação
+  const router = ExpoRouter.useRouter();
 
   const [items, setItems] = useState<AccountItem[]>([]);
   const [restaurant, setRestaurant] = useState("");
@@ -332,8 +334,12 @@ export default function ItemStep() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Os próximos passos (pessoas, atribuição, taxa e resultado) entram nas próximas fatias. */}
-      <StepFooter nextLabel="Próximo: Pessoas (em breve)" />
+      {/* o próximo passo só abre com ao menos um item na conta */}
+      <StepFooter
+        nextLabel="Próximo: Pessoas"
+        nextDisabled={items.length === 0}
+        onNext={() => router.push(`/conta/${id}/pessoas`)}
+      />
     </Screen>
   );
 }

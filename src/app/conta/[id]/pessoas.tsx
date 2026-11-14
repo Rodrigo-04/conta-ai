@@ -1,4 +1,4 @@
-//tela para adicioanr pessoas a conta
+//tela de gerenciamento de pessoas
 import * as ExpoRouter from "expo-router";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState, type ComponentRef } from "react";
@@ -31,7 +31,7 @@ import { StepHeader } from "../../../ui/StepHeader";
 import { TextField } from "../../../ui/TextField";
 import { colors, radius, spacing, text } from "../../../ui/theme";
 
-//transformar erro em mensagem
+//transforma erro em mensagem
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -45,13 +45,14 @@ export default function PeopleStep() {
 
   const [people, setPeople] = useState<Person[]>([]);
   const [payerId, setPayerId] = useState<string | null>(null); //quem pagou a conta
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const nameInput = useRef<ComponentRef<typeof TextInput>>(null);
   const nicknameInput = useRef<ComponentRef<typeof TextInput>>(null);
-  const scrollRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const scrollToEndNext = useRef(false); //rolar até o fim da listaw
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const scrollToEndNext = useRef(false); //rolar até o fim quando a lista crescer
 
   //atualizar informações com o banco de dados
   const reload = useCallback(async () => {
@@ -67,15 +68,15 @@ export default function PeopleStep() {
   useFocusEffect(
     useCallback(() => {
       reload().catch((error) =>
-        console.error("Falaha ao carregar as pessoas: ", error),
+        console.error("Falha ao carregar as pessoas: ", error),
       );
     }, [reload]),
   );
 
-  //rolar até o fim da lista, onde a nova pessoa aparece
+  //rolar até o fim da lista, onde a pessoa nova aparece
   const scrollToEndSoon = () => {
     scrollToEndNext.current = true;
-    //garantir a rolagem mesmo quando a lista não mudar de tamanho
+    //garante a rolagem mesmo se a lista não mudar de tamanho (ex.: edição)
     setTimeout(() => {
       if (scrollToEndNext.current) {
         scrollToEndNext.current = false;
@@ -139,7 +140,7 @@ export default function PeopleStep() {
   //remover pessoa
   const confirmRemove = (person: Person) => {
     Alert.alert(
-      "remover pessoa?",
+      "Remover pessoa?",
       `"${personLabel(person)}" sai da conta e das divisões.`,
       [
         { text: "Cancelar", style: "cancel" },
@@ -174,14 +175,15 @@ export default function PeopleStep() {
           onContentSizeChange={() => {
             if (scrollToEndNext.current) {
               scrollToEndNext.current = false;
-              scrollRef.current?.scrollToend({ animated: true });
+              scrollRef.current?.scrollToEnd({ animated: true });
             }
           }}
         >
           <StepHeader step="Pessoas" />
+
           <View style={styles.form}>
             <Text style={text.heading}>
-              {editingId ? "Editar pessoa" : "adicionar pessoa"}
+              {editingId ? "Editar pessoa" : "Adicionar pessoa"}
             </Text>
             <TextField
               ref={nameInput}
@@ -205,11 +207,11 @@ export default function PeopleStep() {
             />
             {duplicate && (
               <Text style={styles.error}>
-                Já existe alguém com esse nome. use um apelido para distinguir.
+                Já existe alguém com esse nome. Use um apelido para distinguir.
               </Text>
             )}
             <Button
-              title={editingId ? "Salvar alterações" : "adicionar"}
+              title={editingId ? "Salvar alterações" : "Adicionar"}
               onPress={savePerson}
               disabled={!canSave}
             />
@@ -222,7 +224,7 @@ export default function PeopleStep() {
             )}
           </View>
 
-          {/* lista no fim da tela */}
+          {/* lista no fim da tela: as pessoas entram embaixo, na ordem em que são adicionadas */}
           <View style={styles.listHeader}>
             <Text style={text.heading}>Pessoas ({people.length})</Text>
           </View>
@@ -280,7 +282,7 @@ export default function PeopleStep() {
                       <Text
                         style={[styles.chipText, isPayer && styles.chipTextOn]}
                       >
-                        {isPayer ? "Pagou" : "Pagou?"}
+                        {isPayer ? "✓ Pagou" : "Pagou?"}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -290,7 +292,7 @@ export default function PeopleStep() {
                       accessibilityLabel={`Remover ${personLabel(person)}`}
                       style={styles.colRemove}
                     >
-                      <Text style={styles.remove}>X</Text>
+                      <Text style={styles.remove}>✕</Text>
                     </Pressable>
                   </Pressable>
                 );
@@ -299,12 +301,14 @@ export default function PeopleStep() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Os próximos passos (atribuição, taxa e resultado) entram nas próximas fatias. */}
       <StepFooter nextLabel="Próximo: Atribuição (em breve)" />
     </Screen>
   );
 }
 
-//estilos
+//estilo
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
