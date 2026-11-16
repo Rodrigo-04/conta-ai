@@ -16,6 +16,10 @@ export default function AccountLayout() {
     >
       <Stack.Screen name="itens" options={{ title: "Itens da conta" }} />
       <Stack.Screen name="pessoas" options={{ title: "Pessoas da conta" }} />
+      <Stack.Screen
+        name="atribuicao"
+        options={{ title: "Quem consumiu o quê" }}
+      />
     </Stack>
   );
 }

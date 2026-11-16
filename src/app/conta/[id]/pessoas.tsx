@@ -42,6 +42,8 @@ export default function PeopleStep() {
   const { id } = ExpoRouter.useLocalSearchParams<{ id: string }>();
   //banco de dados
   const db = useDb();
+  //navegação
+  const router = ExpoRouter.useRouter();
 
   const [people, setPeople] = useState<Person[]>([]);
   const [payerId, setPayerId] = useState<string | null>(null); //quem pagou a conta
@@ -302,8 +304,12 @@ export default function PeopleStep() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Os próximos passos (atribuição, taxa e resultado) entram nas próximas fatias. */}
-      <StepFooter nextLabel="Próximo: Atribuição (em breve)" />
+      {/* o próximo passo só abre com ao menos uma pessoa na conta */}
+      <StepFooter
+        nextLabel="Próximo: Atribuição"
+        nextDisabled={people.length === 0}
+        onNext={() => router.push(`/conta/${id}/atribuicao`)}
+      />
     </Screen>
   );
 }
