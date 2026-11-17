@@ -9,9 +9,14 @@ import {
 } from "@/db";
 import { useDb } from "@/db/DatabaseProvider";
 import { formatCents } from "@/lib/money";
+import { formatQuantity } from "@/lib/quantity";
+import { Button } from "@/ui/Button";
+import { Screen } from "@/ui/Screen";
+import { StepHeader } from "@/ui/StepHeader";
+import { colors, radius, spacing, text } from "@/ui/theme";
 import * as ExpoRouter from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 //item -> ids das pessoas que consumiram
 type Marks = Record<string, string[]>;
@@ -120,4 +125,107 @@ export default function AssignmentStep() {
   );
 
   //interface
+  return (
+    <Screen edges={["bottom", "left", "right"]}>
+        <ScrollView contentContainerStyle={styles.content}>
+            <StepHeader step="Atribuição" />
+            {items.length === 0 || people.length === 0 ? (
+                <View style={styles.empty}>
+                    <Text style={text.heading}>
+                        {people.length === 0 ? "Nenhuma pessoa na conta" : "Nenhum item na conta" }
+                    </Text>
+                    <Text style={[text.caption, styles.emptyText]}>
+                        {people.length === 0 ? "Adicione quem estava na mesa para marcar quem consumiu cada item" : "Adicione os itens da nota no primeiro passo"}
+                    </Text>
+                    <Button title="Voltar" variant="secondary" onPress={() => router.back()} />
+                </View>
+                ) : (
+                    <>
+                    <View style={[
+                        styles.status, unassigned.length === 0 ? styles.statusOk : styles.statusWarn,
+                    ]}>
+                        <Text style={unassigned.length === 0 ? styles.statusOkText : styles.statusWarnText}>
+                            {unassigned.length === 0 ? "✓ Todos os itens têm dono" : unassigned.length === 1 ? "1 item sem ninguém marcado" : `${unassigned.length} itens sem ninguém marcado`}
+                        </Text>
+                        <Text style={text.caption}>
+                            Toque nas pessoas que consumiram cada item. Mais de uma pessoa divide o item igualmente
+                        </Text>
+                    </View>
+
+                    <Text style={text.heading}>Itens ({items.length})</Text>
+
+                    {items.map((item) => {
+                        const ids = marks[item.id] ?? [];
+                        const first = people.find((p) => ids.includes(p.id));
+                        return(
+                            <View key={item.id} style={[styles.card, ids.length === 0 && styles.cardWarn]}>
+                                <View style={styles.cardTop}>
+                                    <Text style={text.body} numberOfLines={2}>
+                                        {item.name}
+                                    </Text>
+                                    {item.quantity !== 1&& (
+                                        <Text style={text.caption}>
+                                            Qtd.: {formatQuantity(item.quantity)}
+                                        </Text>
+                                    )}
+                                </View>
+                                <Text style={styles.price}>
+                                    {formatCents(item.totalCents)}
+                                </Text>
+                            </View>
+
+                            
+                        )
+                    })}
+                    </>
+                )
+        </ScrollView>
+    </Screen>
+  )
 }
+
+
+//estilo
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
+  empty: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl },
+  emptyText: { textAlign: "center", marginBottom: spacing.sm },
+  status: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.md },
+  statusOk: { backgroundColor: colors.successSoft },
+  statusWarn: { backgroundColor: colors.warningSoft },
+  statusOkText: { fontSize: 15, fontWeight: "600", color: colors.success },
+  statusWarnText: { fontSize: 15, fontWeight: "600", color: colors.warning },
+  card: {
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+  },
+  cardWarn: {
+    borderColor: colors.warning,
+    backgroundColor: colors.warningSoft,
+  },
+  cardTop: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
+  cardName: { flex: 1, gap: spacing.xs },
+  price: { fontSize: 16, fontWeight: "600", color: colors.text },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  chipOn: { backgroundColor: colors.successSoft, borderColor: colors.success },
+  chipText: { fontSize: 14, color: colors.textMuted },
+  chipTextOn: { color: colors.success, fontWeight: "600" },
+  all: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  allText: { fontSize: 14, color: colors.primary, fontWeight: "600" },
+  warnLine: { fontSize: 13, color: colors.warning, fontWeight: "600" },
+});
