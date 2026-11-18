@@ -1,22 +1,31 @@
 //tela de atribuição, identifica quem consumiu o quê
+import * as ExpoRouter from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import {
-    AccountItem,
+    Alert,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
+import {
     getParticipations,
     listItems,
     listPeople,
-    Person,
+    personLabel,
     setItemParticipants,
-} from "@/db";
-import { useDb } from "@/db/DatabaseProvider";
-import { formatCents } from "@/lib/money";
-import { formatQuantity } from "@/lib/quantity";
-import { Button } from "@/ui/Button";
-import { Screen } from "@/ui/Screen";
-import { StepHeader } from "@/ui/StepHeader";
-import { colors, radius, spacing, text } from "@/ui/theme";
-import * as ExpoRouter from "expo-router";
-import { useCallback, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+    type AccountItem,
+    type Person,
+} from "../../../db";
+import { useDb } from "../../../db/DatabaseProvider";
+import { formatCents } from "../../../lib/money";
+import { formatQuantity } from "../../../lib/quantity";
+import { Button } from "../../../ui/Button";
+import { Screen } from "../../../ui/Screen";
+import { StepFooter } from "../../../ui/StepFooter";
+import { StepHeader } from "../../../ui/StepHeader";
+import { colors, radius, spacing, text } from "../../../ui/theme";
 
 //item -> ids das pessoas que consumiram
 type Marks = Record<string, string[]>;
@@ -127,63 +136,135 @@ export default function AssignmentStep() {
   //interface
   return (
     <Screen edges={["bottom", "left", "right"]}>
-        <ScrollView contentContainerStyle={styles.content}>
-            <StepHeader step="Atribuição" />
-            {items.length === 0 || people.length === 0 ? (
-                <View style={styles.empty}>
-                    <Text style={text.heading}>
-                        {people.length === 0 ? "Nenhuma pessoa na conta" : "Nenhum item na conta" }
-                    </Text>
-                    <Text style={[text.caption, styles.emptyText]}>
-                        {people.length === 0 ? "Adicione quem estava na mesa para marcar quem consumiu cada item" : "Adicione os itens da nota no primeiro passo"}
-                    </Text>
-                    <Button title="Voltar" variant="secondary" onPress={() => router.back()} />
-                </View>
-                ) : (
-                    <>
-                    <View style={[
-                        styles.status, unassigned.length === 0 ? styles.statusOk : styles.statusWarn,
-                    ]}>
-                        <Text style={unassigned.length === 0 ? styles.statusOkText : styles.statusWarnText}>
-                            {unassigned.length === 0 ? "✓ Todos os itens têm dono" : unassigned.length === 1 ? "1 item sem ninguém marcado" : `${unassigned.length} itens sem ninguém marcado`}
-                        </Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <StepHeader step="Atribuição" />
+        {items.length === 0 || people.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={text.heading}>
+              {people.length === 0
+                ? "Nenhuma pessoa na conta"
+                : "Nenhum item na conta"}
+            </Text>
+            <Text style={[text.caption, styles.emptyText]}>
+              {people.length === 0
+                ? "Adicione quem estava na mesa para marcar quem consumiu cada item"
+                : "Adicione os itens da nota no primeiro passo"}
+            </Text>
+            <Button
+              title="Voltar"
+              variant="secondary"
+              onPress={() => router.back()}
+            />
+          </View>
+        ) : (
+          <>
+            <View
+              style={[
+                styles.status,
+                unassigned.length === 0 ? styles.statusOk : styles.statusWarn,
+              ]}
+            >
+              <Text
+                style={
+                  unassigned.length === 0
+                    ? styles.statusOkText
+                    : styles.statusWarnText
+                }
+              >
+                {unassigned.length === 0
+                  ? "✓ Todos os itens têm dono"
+                  : unassigned.length === 1
+                    ? "1 item sem ninguém marcado"
+                    : `${unassigned.length} itens sem ninguém marcado`}
+              </Text>
+              <Text style={text.caption}>
+                Toque nas pessoas que consumiram cada item. Mais de uma pessoa
+                divide o item igualmente
+              </Text>
+            </View>
+
+            <Text style={text.heading}>Itens ({items.length})</Text>
+
+            {items.map((item) => {
+              const ids = marks[item.id] ?? [];
+              const first = people.find((p) => ids.includes(p.id));
+              return (
+                <View
+                  key={item.id}
+                  style={[styles.card, ids.length === 0 && styles.cardWarn]}
+                >
+                  <View style={styles.cardTop}>
+                    <View style={styles.cardName}>
+                      <Text style={text.body} numberOfLines={2}>
+                        {item.name}
+                      </Text>
+                      {item.quantity !== 1 && (
                         <Text style={text.caption}>
-                            Toque nas pessoas que consumiram cada item. Mais de uma pessoa divide o item igualmente
+                          Qtd.: {formatQuantity(item.quantity)}
                         </Text>
+                      )}
                     </View>
+                    <Text style={styles.price}>
+                      {formatCents(item.totalCents)}
+                    </Text>
+                  </View>
 
-                    <Text style={text.heading}>Itens ({items.length})</Text>
-
-                    {items.map((item) => {
-                        const ids = marks[item.id] ?? [];
-                        const first = people.find((p) => ids.includes(p.id));
-                        return(
-                            <View key={item.id} style={[styles.card, ids.length === 0 && styles.cardWarn]}>
-                                <View style={styles.cardTop}>
-                                    <Text style={text.body} numberOfLines={2}>
-                                        {item.name}
-                                    </Text>
-                                    {item.quantity !== 1&& (
-                                        <Text style={text.caption}>
-                                            Qtd.: {formatQuantity(item.quantity)}
-                                        </Text>
-                                    )}
-                                </View>
-                                <Text style={styles.price}>
-                                    {formatCents(item.totalCents)}
-                                </Text>
-                            </View>
-
-                            
-                        )
+                  <View style={styles.chips}>
+                    {people.map((person) => {
+                      const on = ids.includes(person.id);
+                      return (
+                        <Pressable
+                          key={person.id}
+                          onPress={() => togglePerson(item, person)}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: on }}
+                          accessibilityLabel={`${personLabel} em ${item.name}`}
+                          style={[styles.chip, on && styles.chipOn]}
+                        >
+                          <Text style={[styles.chip, on && styles.chipTextOn]}>
+                            {on ? "✓ " : ""}
+                            {personLabel(person)}
+                          </Text>
+                        </Pressable>
+                      );
                     })}
-                    </>
-                )
-        </ScrollView>
-    </Screen>
-  )
-}
+                    <Pressable
+                      onPress={() =>
+                        changeMarks(
+                          item.id,
+                          people.map((p) => p.id),
+                        )
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Marcar todos em ${item.name}`}
+                      style={styles.all}
+                    >
+                      <Text style={styles.allText}>Todos</Text>
+                    </Pressable>
+                  </View>
 
+                  <Text
+                    style={ids.length === 0 ? styles.warnLine : text.caption}
+                  >
+                    {ids.length === 0
+                      ? "Ninguém marcado: escolha ao menos uma pessoa."
+                      : perPersonText(
+                          item,
+                          ids.length,
+                          first ? personLabel(first) : "",
+                        )}
+                  </Text>
+                </View>
+              );
+            })}
+          </>
+        )}
+      </ScrollView>
+      {/* O próximo passo (taxa) entra na próxima fatia; ele só abrirá sem itens sem dono. */}
+      <StepFooter nextLabel="Próximo: Taxa (em breve)" />
+    </Screen>
+  );
+}
 
 //estilo
 const styles = StyleSheet.create({
