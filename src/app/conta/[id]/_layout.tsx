@@ -20,6 +20,7 @@ export default function AccountLayout() {
         name="atribuicao"
         options={{ title: "Quem consumiu o quê" }}
       />
+      <Stack.Screen name="taxa" options={{ title: "Taxa de serviço" }} />
     </Stack>
   );
 }

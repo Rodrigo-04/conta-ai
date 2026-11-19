@@ -260,8 +260,14 @@ export default function AssignmentStep() {
           </>
         )}
       </ScrollView>
-      {/* O próximo passo (taxa) entra na próxima fatia; ele só abrirá sem itens sem dono. */}
-      <StepFooter nextLabel="Próximo: Taxa (em breve)" />
+      {/* o próximo passo só abre com tudo atribuído */}
+      <StepFooter
+        nextLabel="Próximo: Taxa"
+        nextDisabled={
+          items.length === 0 || people.length === 0 || unassigned.length > 0
+        }
+        onNext={() => router.push(`/conta/${id}/taxa`)}
+      />
     </Screen>
   );
 }
